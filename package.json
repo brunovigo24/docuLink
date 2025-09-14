@@ -12,7 +12,11 @@
     "test:coverage": "jest --coverage",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
-    "format": "prettier --write src/**/*.ts"
+    "format": "prettier --write src/**/*.ts",
+    "db:init": "ts-node src/scripts/init-database.ts init",
+    "db:reset": "ts-node src/scripts/init-database.ts reset",
+    "db:seed": "ts-node src/scripts/seed-database.ts seed",
+    "db:clear": "ts-node src/scripts/seed-database.ts clear"
   },
   "keywords": ["api", "document-processing", "pdf", "web-scraping", "nodejs", "express"],
   "author": "",
