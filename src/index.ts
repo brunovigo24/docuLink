@@ -2,7 +2,12 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { config } from './config/environment';
-import { clientRoutes } from './controllers';
+import { clientRoutes, documentRoutes, createClientDocumentRoutes } from './controllers';
+import { DocumentController } from './controllers/DocumentController';
+import { DocumentService } from './services/DocumentService';
+import { DocumentRepository } from './repositories/DocumentRepository';
+import { ClientService } from './services/ClientService';
+import { ClientRepository } from './repositories/ClientRepository';
 import { errorHandler, notFoundHandler } from './middleware';
 import { DatabaseUtils } from './utils/database';
 
@@ -24,8 +29,17 @@ app.get('/health', async (_req, res) => {
   });
 });
 
+// Inicializar serviços para processamento de documentos
+const clientRepository = new ClientRepository();
+const documentRepository = new DocumentRepository();
+const clientService = new ClientService(clientRepository);
+const documentService = new DocumentService(documentRepository, clientService);
+const documentController = new DocumentController(documentService);
+
 // API routes
 app.use('/api/clients', clientRoutes);
+app.use('/api/clients', createClientDocumentRoutes(documentController));
+app.use('/api/documents', documentRoutes);
 
 // Error handling middleware
 app.use(notFoundHandler);
