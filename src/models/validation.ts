@@ -82,7 +82,6 @@ export const processWebSchema = Joi.object({
     .max(1000)
     .required()
     .messages({
-      'string.uri': 'URL must be a valid HTTP or HTTPS URL',
       'string.max': 'URL must not exceed 1000 characters',
       'any.required': 'URL is required'
     })
