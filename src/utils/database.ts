@@ -69,6 +69,8 @@ export class DatabaseUtils {
     const migrationsDir = path.join(__dirname, '../migrations');
     
     try {
+      await this.ensureDatabaseExists();
+      
       const files = await fs.readdir(migrationsDir);
       const sqlFiles = files
         .filter(file => file.endsWith('.sql'))
@@ -87,7 +89,9 @@ export class DatabaseUtils {
           .filter(stmt => stmt.length > 0);
 
         for (const statement of statements) {
-          await this.query(statement);
+          if (statement.trim()) {
+            await this.query(statement);
+          }
         }
         
         console.log(`Migration completed: ${file}`);
@@ -95,8 +99,32 @@ export class DatabaseUtils {
       
       console.log('All migrations completed successfully');
     } catch (error) {
-      console.error('Migration error:', error);
+      console.error('Migration error details:', error);
       throw new DatabaseError('Migration failed', error);
+    }
+  }
+
+  static async ensureDatabaseExists(): Promise<void> {
+    try {
+      const dbName = process.env['DB_NAME'] || 'docuLink';
+      
+      const tempConfig = {
+        host: process.env['DB_HOST'] || 'localhost',
+        port: parseInt(process.env['DB_PORT'] || '3306'),
+        user: process.env['DB_USER'] || 'root',
+        password: process.env['DB_PASSWORD'] || '123',
+      };
+      
+      const tempPool = require('mysql2/promise').createPool(tempConfig);
+      
+      // Create database if it doesn't exist
+      await tempPool.execute(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``);
+      console.log(`Database '${dbName}' ensured to exist`);
+      
+      await tempPool.end();
+    } catch (error) {
+      console.error('Error ensuring database exists:', error);
+      throw new DatabaseError('Failed to ensure database exists', error);
     }
   }
 
@@ -115,4 +143,31 @@ export class DatabaseUtils {
       throw new DatabaseError('Failed to drop tables', error);
     }
   }
+}
+
+/**
+ * Funções auxiliares para testes
+ */
+export async function initializeDatabase(): Promise<void> {
+  try {
+    await DatabaseUtils.runMigrations();
+    console.log('Test database initialized');
+  } catch (error) {
+    console.error('Failed to initialize test database:', error);
+    throw error;
+  }
+}
+
+export async function closeDatabase(): Promise<void> {
+  try {
+    await pool.end();
+    console.log('Database connection closed');
+  } catch (error) {
+    console.error('Error closing database connection:', error);
+    throw error;
+  }
+}
+
+export function getConnection() {
+  return pool;
 }
