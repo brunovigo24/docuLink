@@ -5,7 +5,7 @@
 import { Client, ClientWithDocumentCount, CreateClientRequest, UpdateClientRequest } from '../models/interfaces';
 import { ClientRepository } from '../repositories/ClientRepository';
 import { createClientSchema, updateClientSchema } from '../models/validation';
-import { ValidationError, BusinessLogicError } from '../utils/errors';
+import { ValidationError, BusinessLogicError, NotFoundError } from '../utils/errors';
 
 export class ClientService {
   constructor(private clientRepository: ClientRepository) {}
@@ -139,7 +139,7 @@ export class ClientService {
 
     const client = await this.clientRepository.findById(clientId);
     if (!client) {
-      throw new BusinessLogicError(`Client with ID ${clientId} not found`);
+      throw new NotFoundError(`Client with ID ${clientId} not found`);
     }
 
     return client;

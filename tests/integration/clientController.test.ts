@@ -178,7 +178,8 @@ describe('Client Controller Integration Tests', () => {
       // Criar cliente de teste
       const createResponse = await request(app)
         .post('/api/clients')
-        .send({ name: 'Test Client', email: 'test@example.com' });
+        .send({ name: 'Test Client', email: 'test@example.com' })
+        .expect(201);
 
       const clientId = createResponse.body.data.id;
 
@@ -349,7 +350,8 @@ describe('Client Controller Integration Tests', () => {
       // Criar cliente de teste
       const createResponse = await request(app)
         .post('/api/clients')
-        .send({ name: 'Test Client', email: 'test@example.com' });
+        .send({ name: 'Test Client', email: 'test@example.com' })
+        .expect(201);
 
       const clientId = createResponse.body.data.id;
 

@@ -22,7 +22,7 @@ export const validateBody = (schema: Joi.ObjectSchema) => {
 
     if (error) {
       const validationError = new ValidationError(
-        `Validation failed: ${error.details.map(d => d.message).join(', ')}`
+        error.details.map(d => d.message).join(', ')
       );
       return next(validationError);
     }
@@ -44,7 +44,7 @@ export const validateParams = (schema: Joi.ObjectSchema) => {
 
     if (error) {
       const validationError = new ValidationError(
-        `Parameter validation failed: ${error.details.map(d => d.message).join(', ')}`
+        error.details.map(d => d.message).join(', ')
       );
       return next(validationError);
     }
@@ -66,7 +66,7 @@ export const validateQuery = (schema: Joi.ObjectSchema) => {
 
     if (error) {
       const validationError = new ValidationError(
-        `Query validation failed: ${error.details.map(d => d.message).join(', ')}`
+        error.details.map(d => d.message).join(', ')
       );
       return next(validationError);
     }

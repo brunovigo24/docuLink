@@ -5,7 +5,7 @@
 
 import { ClientService } from '../../../src/services/ClientService';
 import { ClientRepository } from '../../../src/repositories/ClientRepository';
-import { ValidationError, BusinessLogicError } from '../../../src/utils/errors';
+import { ValidationError, BusinessLogicError, NotFoundError } from '../../../src/utils/errors';
 import { Client, ClientWithDocumentCount, CreateClientRequest, UpdateClientRequest } from '../../../src/models/interfaces';
 
 // Mock do ClientRepository
@@ -320,11 +320,11 @@ describe('ClientService', () => {
       expect(mockClientRepository.findById).toHaveBeenCalledWith(1);
     });
 
-    it('should throw BusinessLogicError when client not found', async () => {
+    it('should throw NotFoundError when client not found', async () => {
       mockClientRepository.findById.mockResolvedValue(null);
 
       await expect(clientService.validateClientExists(999))
-        .rejects.toThrow(BusinessLogicError);
+        .rejects.toThrow(NotFoundError);
       
       expect(mockClientRepository.findById).toHaveBeenCalledWith(999);
     });
