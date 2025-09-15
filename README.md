@@ -22,7 +22,7 @@ Uma API REST abrangente para processamento de documentos que gerencia uploads de
 
 ### Pré-requisitos
 
-- Node.js 18+
+- Node.js 20.18.1.
 - MariaDB ou MySQL
 - Docker (opcional)
 
