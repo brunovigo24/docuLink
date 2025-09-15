@@ -1,0 +1,44 @@
+services:
+  # MariaDB Database
+  database:
+    image: mariadb:10.11
+    container_name: doculink-database
+    environment:
+      MYSQL_ROOT_PASSWORD: 123
+      MYSQL_DATABASE: docuLink
+      MYSQL_USER: docuLink_user
+      MYSQL_PASSWORD: 123
+    ports:
+      - "3307:3306"
+    volumes:
+      - database_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Document Processing API
+  api:
+    build: .
+    container_name: doculink-api
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DB_HOST: database
+      DB_PORT: 3306
+      DB_NAME: docuLink
+      DB_USER: docuLink_user
+      DB_PASSWORD: 123
+      LOG_LEVEL: info
+    ports:
+      - "3000:3000"
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      database:
+        condition: service_healthy
+
+volumes:
+  database_data:
+  uploads_data:
