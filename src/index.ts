@@ -2,7 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import swaggerUi from 'swagger-ui-express';
 import { config } from './config/environment';
+import { swaggerSpec } from './config/swagger';
 import { clientRoutes, documentRoutes, createClientDocumentRoutes } from './controllers';
 import { DocumentController } from './controllers/DocumentController';
 import { DocumentService } from './services/DocumentService';
@@ -19,9 +21,11 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      connectSrc: ["'self'"]
     },
   },
   hsts: {
@@ -39,11 +43,11 @@ app.use(cors({
 }));
 
 // Parsing de requests com limites de tamanho
-app.use(express.json({ 
+app.use(express.json({
   limit: `${Math.floor(config.UPLOAD_MAX_SIZE / 1024 / 1024)}mb`
 }));
-app.use(express.urlencoded({ 
-  extended: true, 
+app.use(express.urlencoded({
+  extended: true,
   limit: `${Math.floor(config.UPLOAD_MAX_SIZE / 1024 / 1024)}mb`
 }));
 
@@ -98,15 +102,60 @@ const uploadLimiter = rateLimit({
 app.use('/api/documents/pdf', uploadLimiter);
 app.use('/api/documents/web', uploadLimiter);
 
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: System health check
+ *     description: Returns the overall health status of the API and its dependencies
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: System is healthy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/HealthStatus'
+ *             example:
+ *               status: "healthy"
+ *               timestamp: "2023-12-01T10:00:00.000Z"
+ *               requestId: "req_1701423600000_abc123"
+ *               services:
+ *                 database: "connected"
+ *                 api: "running"
+ *               system:
+ *                 uptime: 3600
+ *                 memory:
+ *                   rss: 50331648
+ *                   heapTotal: 20971520
+ *                   heapUsed: 15728640
+ *                 nodeVersion: "v18.19.1"
+ *                 environment: "development"
+ *               responseTime: "15ms"
+ *       503:
+ *         description: System is unhealthy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/HealthStatus'
+ *             example:
+ *               status: "unhealthy"
+ *               timestamp: "2023-12-01T10:00:00.000Z"
+ *               requestId: "req_1701423600000_abc123"
+ *               services:
+ *                 database: "disconnected"
+ *                 api: "running"
+ *               responseTime: "25ms"
+ */
 // Endpoint de health check para monitoramento
 app.get('/health', async (req, res) => {
   const startTime = Date.now();
   const requestId = req.headers['x-request-id'] as string;
-  
+
   try {
     const dbHealthy = await DatabaseUtils.healthCheck();
     const responseTime = Date.now() - startTime;
-    
+
     const healthStatus = {
       status: dbHealthy ? 'healthy' : 'unhealthy',
       timestamp: new Date().toISOString(),
@@ -123,7 +172,7 @@ app.get('/health', async (req, res) => {
       },
       responseTime: `${responseTime}ms`
     };
-    
+
     res.status(dbHealthy ? 200 : 503).json(healthStatus);
   } catch (error) {
     console.error('Health check error:', error);
@@ -137,6 +186,42 @@ app.get('/health', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /ready:
+ *   get:
+ *     summary: Readiness probe
+ *     description: Returns whether the API is ready to accept requests
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: API is ready
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   enum: [ready]
+ *             example:
+ *               status: "ready"
+ *       503:
+ *         description: API is not ready
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   enum: [not ready]
+ *                 reason:
+ *                   type: string
+ *             example:
+ *               status: "not ready"
+ *               reason: "database unavailable"
+ */
 // Endpoint de readiness probe
 app.get('/ready', async (_req, res) => {
   try {
@@ -158,6 +243,36 @@ const clientService = new ClientService(clientRepository);
 const documentService = new DocumentService(documentRepository, clientService);
 const documentController = new DocumentController(documentService);
 
+// Swagger UI setup
+const swaggerUiOptions = {
+  explorer: true,
+  swaggerOptions: {
+    docExpansion: 'none',
+    filter: true,
+    showRequestDuration: true,
+    tryItOutEnabled: true,
+    requestInterceptor: (req: any) => {
+      req.headers['x-request-id'] = `swagger_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      return req;
+    }
+  },
+  customCss: `
+    .swagger-ui .topbar { display: none }
+    .swagger-ui .info { margin: 20px 0 }
+    .swagger-ui .info .title { color: #3b4151 }
+  `,
+  customSiteTitle: 'Documentação da API de Processamento de Documentos'
+};
+
+// Swagger documentation routes
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerUiOptions));
+
+// Swagger JSON endpoint
+app.get('/api-docs.json', (_req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
+
 // Rotas da API
 app.use('/api/clients', clientRoutes);
 app.use('/api/clients', createClientDocumentRoutes(documentController));
@@ -176,7 +291,7 @@ const startServer = async () => {
     console.log('🚀 Starting Document Processing API...');
     console.log(`📊 Environment: ${config.NODE_ENV}`);
     console.log(`🔧 Node.js version: ${process.version}`);
-    
+
     // Verificar conexão com o banco de dados antes de iniciar o servidor
     console.log('🔍 Checking database connection...');
     const dbHealthy = await DatabaseUtils.healthCheck();
@@ -193,7 +308,7 @@ const startServer = async () => {
       console.log(`🏥 Health check: http://localhost:${config.PORT}/health`);
       console.log(`🔄 Readiness probe: http://localhost:${config.PORT}/ready`);
       console.log(`📝 API endpoints available at: http://localhost:${config.PORT}/api`);
-      
+
       if (config.NODE_ENV === 'development') {
         console.log('🔧 Development mode - additional logging enabled');
       }
@@ -213,7 +328,7 @@ const startServer = async () => {
 // Tratamento de shutdown graceful
 const gracefulShutdown = async (signal: string) => {
   console.log(`\n🛑 ${signal} received - initiating graceful shutdown...`);
-  
+
   if (server) {
     console.log('🔄 Closing HTTP server...');
     server.close(async (err: any) => {
@@ -222,12 +337,12 @@ const gracefulShutdown = async (signal: string) => {
       } else {
         console.log('✅ HTTP server closed');
       }
-      
+
       try {
         console.log('🔄 Closing database connections...');
         await closeDatabase();
         console.log('✅ Database connections closed');
-        
+
         console.log('✅ Graceful shutdown completed');
         process.exit(0);
       } catch (error) {

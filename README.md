@@ -1,7 +1,7 @@
 # API de Processamento de Documentos
 
 <div align="center">
-  <img src="DocuLink.png.png" alt="DocuLink Logo" width="200">
+  <img src="DocuLink.png" alt="DocuLink Logo" width="200">
 </div>
 
 Uma API REST abrangente para processamento de documentos que gerencia uploads de PDF e scraping de páginas web com capacidades de gerenciamento de clientes. Construída com Node.js, Express e MariaDB.
@@ -13,6 +13,7 @@ Uma API REST abrangente para processamento de documentos que gerencia uploads de
 - **Web Scraping**: Extração de conteúdo de páginas web via URL
 - **Associação de Documentos**: Vincular documentos processados a clientes específicos
 - **API Abrangente**: Endpoints RESTful com tratamento adequado de erros
+- **Documentação Interativa**: Swagger/OpenAPI 3.0 com interface para testes
 - **Integração com Banco de Dados**: MariaDB com pool de conexões e migrações
 - **Containerização**: Suporte Docker para deploy fácil
 - **Testes**: Cobertura abrangente de testes unitários e de integração
@@ -66,6 +67,8 @@ Uma API REST abrangente para processamento de documentos que gerencia uploads de
    ```
 
 A API estará disponível em `http://localhost:3000`
+
+**📝 Documentação Interativa**: Acesse `http://localhost:3000/api-docs` para a documentação Swagger completa
 
 ### Setup Docker
 
@@ -314,6 +317,17 @@ GET /api/documents/health
 GET /api/documents/statistics
 ```
 
+## Documentação Interativa com Swagger
+
+A API inclui documentação interativa completa usando Swagger/OpenAPI 3.0, permitindo testar todos os endpoints diretamente no navegador.
+
+### Acessando a Documentação
+
+Após iniciar a aplicação, acesse a documentação Swagger em:
+
+```
+http://localhost:3000/api-docs
+```
 ## Desenvolvimento
 
 ### Scripts Disponíveis
