@@ -1,5 +1,5 @@
 # Dockerfile simples para Document Processing API
-FROM node:18-alpine
+FROM node:20-alpine
 
 # Instalar dependências do sistema
 RUN apk add --no-cache \

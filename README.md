@@ -634,8 +634,6 @@ PORT=3001
 - Aumente timeout no `.env`: `WEB_SCRAPING_TIMEOUT=60000`
 - Alguns sites podem bloquear requisições automatizadas
 
-Para solução de problemas detalhada, veja o [Guia de Solução de Problemas](./docs/troubleshooting.md).
-
 ### Obtendo Ajuda
 
 1. **Verifique os logs**: Habilite logging de debug com `LOG_LEVEL=debug`
