@@ -8,13 +8,25 @@ import { DocumentService } from '../services/DocumentService';
 import { DocumentRepository } from '../repositories/DocumentRepository';
 import { ClientService } from '../services/ClientService';
 import { ClientRepository } from '../repositories/ClientRepository';
+import { PDFProcessingService } from '../services/PDFProcessingService';
+import { WebScrapingService } from '../services/WebScrapingService';
 import { validateBody, validateParams, validateQuery } from '../middleware/validation';
 import { processPDFSchema, processWebSchema, idParamSchema, paginationSchema } from '../models/validation';
 
 const clientRepository = new ClientRepository();
 const documentRepository = new DocumentRepository();
 const clientService = new ClientService(clientRepository);
-const documentService = new DocumentService(documentRepository, clientService);
+
+// Inicializar serviços de processamento
+const pdfProcessingService = new PDFProcessingService();
+const webScrapingService = new WebScrapingService();
+
+const documentService = new DocumentService(
+  documentRepository, 
+  clientService, 
+  pdfProcessingService,
+  webScrapingService
+);
 const documentController = new DocumentController(documentService);
 
 const router = Router();
@@ -111,9 +123,9 @@ router.get('/statistics', documentController.getDocumentStatistics);
  *         multipart/form-data:
  *           schema:
  *             type: object
- *             required: [file, client_id]
+ *             required: [pdf, client_id]
  *             properties:
- *               file:
+ *               pdf:
  *                 type: string
  *                 format: binary
  *                 description: PDF file to upload

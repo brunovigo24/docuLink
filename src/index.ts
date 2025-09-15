@@ -11,6 +11,8 @@ import { DocumentService } from './services/DocumentService';
 import { DocumentRepository } from './repositories/DocumentRepository';
 import { ClientService } from './services/ClientService';
 import { ClientRepository } from './repositories/ClientRepository';
+import { PDFProcessingService } from './services/PDFProcessingService';
+import { WebScrapingService } from './services/WebScrapingService';
 import { errorHandler, notFoundHandler } from './middleware';
 import { DatabaseUtils, closeDatabase } from './utils/database';
 
@@ -88,8 +90,8 @@ app.use('/api', limiter);
 
 // Rate limiting mais estrito para endpoints de upload de arquivos
 const uploadLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // limit each IP to 10 upload requests per windowMs
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 50, // limit each IP to 50 upload requests per windowMs
   message: {
     error: {
       code: 'UPLOAD_RATE_LIMIT_EXCEEDED',
@@ -240,7 +242,17 @@ app.get('/ready', async (_req, res) => {
 const clientRepository = new ClientRepository();
 const documentRepository = new DocumentRepository();
 const clientService = new ClientService(clientRepository);
-const documentService = new DocumentService(documentRepository, clientService);
+
+// Inicializar serviços de processamento
+const pdfProcessingService = new PDFProcessingService();
+const webScrapingService = new WebScrapingService();
+
+const documentService = new DocumentService(
+  documentRepository, 
+  clientService, 
+  pdfProcessingService,
+  webScrapingService
+);
 const documentController = new DocumentController(documentService);
 
 // Swagger UI setup
